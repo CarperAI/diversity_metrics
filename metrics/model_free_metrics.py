@@ -23,9 +23,9 @@ def n_gram_overlap(inputs, n):
 
 def ncd(x, y):
     '''
-    Calculates the normalized compression distnce using gzip
+    Calculates the normalized compression distance using gzip
     https://arxiv.org/abs/cs/0312044
-    
+    https://ieeexplore.ieee.org/abstract/document/1362909
     :param x:
     :param y:
     :return:
@@ -41,7 +41,9 @@ def ncd(x, y):
 
 def avg_compression_ratio_full(sentences):
     '''
-
+    Calculates the average change in compression distance in a leave-one-out setting. Here, we calculate the compression
+    ratio of the list of sentences minus the target sentences, and then calculate the compression ratio including the target
+    at the end
     :param sentences:
     :return:
     '''
@@ -62,7 +64,8 @@ def avg_compression_ratio_full(sentences):
 
 def avg_compression_ratio_target(sentences):
     '''
-
+    Calculates the average change in compression distance in a leave-one-out setting. Here we calculate the compression
+    ratio of the target sentence by itself, and then calculate the compression ratio by prepending the other sentences
     :param sentences:
     :return:
     '''
