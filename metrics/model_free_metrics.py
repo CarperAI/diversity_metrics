@@ -21,7 +21,7 @@ def self_bleu(sentences):
 
     return sum(scores) / len(scores)
 
-def pairwise_ngram(x, y, n):
+def pairwise_ngram(n, x, y):
     '''
     Jaccard similarity using ngrams
 
