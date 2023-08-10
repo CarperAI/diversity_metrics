@@ -1,10 +1,13 @@
+import torch
+from torch.nn import functional as F
 from nltk.translate.bleu_score import sentence_bleu
+from nltk import ngrams
 import gzip
 
 def self_bleu(sentences):
     '''
-    Calculates the Self-BLEU score for a collection of generated sentences (https://arxiv.org/abs/1802.01886)
-    :param sentences: List of generated sentences
+    Calculates the Self-BLEU score for a collection of generated examples (https://arxiv.org/abs/1802.01886)
+    :param sentences: List of generated examples
     :return:
     '''
 
@@ -18,8 +21,25 @@ def self_bleu(sentences):
 
     return sum(scores) / len(scores)
 
-def n_gram_overlap(inputs, n):
-    pass
+def pairwise_ngram(x, y, n):
+    '''
+    Jaccard similarity using ngrams
+
+    # common ngrams / # unique ngrams
+    :param x:
+    :param y:
+    :param n:
+    :return:
+    '''
+    x_ngrams = list(ngrams(x.lower().split(), n))
+    y_ngrams = list(ngrams(y.lower().split(), n))
+
+    ct = 0
+    for gram in x_ngrams:
+        if gram in y_ngrams:
+            ct +=1
+
+    return ct / (len(list(set(x_ngrams + y_ngrams))))
 
 def ncd(x, y):
     '''
@@ -39,10 +59,42 @@ def ncd(x, y):
 
     return (joint_len - min_len) / max_len
 
+def get_pairwise_ncd(generations):
+    '''
+
+    :param generations:
+    :return:
+    '''
+    ncds = []
+    for i, s in enumerate(generations):
+
+        vals = [ncd(s,generations[j]) for j in range(len(generations)) if i != j]
+        ncds.append(sum(vals) / len(vals))
+    return ncds
+
+def get_avg_cosine_sim(model, generations):
+    '''
+    Average pairwise cosine similarity
+    Requires SentenceEmbedder
+    :param model:
+    :param generations:
+    :return:
+    '''
+    embeds = model.embed_sentences(generations)
+    tense_embeds = torch.Tensor(embeds).unsqueeze(0)
+    sims = F.cosine_similarity(tense_embeds[..., None, :, :], tense_embeds[..., :, None, :], dim=-1)
+    lower_triangle = torch.tril(sims, diagonal=-1)
+    return lower_triangle.squeeze(0).sum() / (lower_triangle != 0).sum()
+
+def get_pairwise_cosine_sim(model, x, y):
+
+    return get_avg_cosine_sim(model, [x,y])
+
+
 def avg_compression_ratio_full(sentences):
     '''
     Calculates the average change in compression distance in a leave-one-out setting. Here, we calculate the compression
-    ratio of the list of sentences minus the target sentences, and then calculate the compression ratio including the target
+    ratio of the list of examples minus the target examples, and then calculate the compression ratio including the target
     at the end
     :param sentences:
     :return:
@@ -65,7 +117,7 @@ def avg_compression_ratio_full(sentences):
 def avg_compression_ratio_target(sentences):
     '''
     Calculates the average change in compression distance in a leave-one-out setting. Here we calculate the compression
-    ratio of the target sentence by itself, and then calculate the compression ratio by prepending the other sentences
+    ratio of the target sentence by itself, and then calculate the compression ratio by prepending the other examples
     :param sentences:
     :return:
     '''
