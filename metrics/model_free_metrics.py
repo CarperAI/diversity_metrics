@@ -31,15 +31,16 @@ def pairwise_ngram(n, x, y):
     :param n:
     :return:
     '''
-    x_ngrams = list(ngrams(x.lower().split(), n))
-    y_ngrams = list(ngrams(y.lower().split(), n))
+    x_ngrams = set(list(ngrams(x.lower().split(), n)))
+    y_ngrams = set(list(ngrams(y.lower().split(), n)))
+    intersect = x_ngrams.intersection(y_ngrams)
+    union = x_ngrams.union(y_ngrams)
 
-    ct = 0
-    for gram in x_ngrams:
-        if gram in y_ngrams:
-            ct +=1
+    if len(union) == 0:
+        return 0
 
-    return ct / (len(list(set(x_ngrams + y_ngrams))))
+    else:
+        return len(intersect) / len(union)
 
 def ncd(x, y):
     '''
